@@ -36,7 +36,7 @@ def main ():
         adresse, bolig_areal = forside_obj.input()
     if not adresse:
         st.title('Bergvarmekalkulatoren')
-        lott = load_lottie('https://assets7.lottiefiles.com/packages/lf20_arvhfjzt.json')
+        lott = load_lottie('https://assets5.lottiefiles.com/packages/lf20_l22gyrgm.json')
         st_lottie(lott)
         st.header('👈Kalkuler din gevinst ved å hente energi fra berggrunnen!')
 
