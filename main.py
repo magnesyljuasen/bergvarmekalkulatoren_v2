@@ -155,6 +155,7 @@ def main ():
     #-----------Sidebar
     with st.sidebar:   
         kostnader_obj.oppdater_dybde_til_fjell()
+        st.spinner('Beregner')
     #-----------
 
 
