@@ -10,7 +10,13 @@ from PIL import Image
 from streamlit_folium import folium_static
 from geopy.geocoders import Nominatim
 from streamlit_lottie import st_lottie
+import requests
 
+def load_lottie(url: str):
+    r = requests.get(url)
+    if r.status_code!= 200:
+        return None
+    return r.json()
 
 def hour_to_month (hourly_array):
     monthly_array = []
@@ -36,8 +42,11 @@ class Veienvidere:
         url2 = "https://www.enova.no/privat/alle-energitiltak/varmepumper/vaske-til-vann-varmepumpe-/"
         st.header("Søk ENOVA støtte [her](%s)" % url2)
 
-        url2 = "https://www.asplanviak.no/tjenester/grunnvarme/"
-        st.header("Lær mer om bergvarme [her](%s)" % url2)
+        url3 = "https://www.varmepumpeinfo.no/energikilder-for-varmepumper/bergvarme"
+        st.header("Lær mer om bergvarme [her](%s)" % url3)
+
+        url4 = "https://www.asplanviak.no/tjenester/grunnvarme/"
+        st.header("Rådgivningstjenester for større anlegg [her](%s)" % url4)
 
         image = Image.open('Bilder/AsplanViak_illustrasjoner-02.png')
         st.image(image)
@@ -62,16 +71,10 @@ class Co2:
         plt.rcParams['axes.facecolor'] = '#FFFFFF'
         plt.rcParams['savefig.facecolor'] = '#F6F8F1'
 
+        #elektrisk_oppvarming_label = 'Elektrisk oppvarming: ' + str(round (co2_el_ligning[-1])) + ' tonn'
+        #bergvarme_label = 'Bergvarme: ' + str(round (co2_gv_ligning[-1])) + ' tonn'
         plt.plot(x_axis, co2_el_ligning, label='Elektrisk oppvarming', color = '#880808')
         plt.plot(x_axis, co2_gv_ligning, label='Bergvarme', color = '#48a23f')
-
-        res_column_1, res_column_2, res_column_3 = st.columns(3)
-        with res_column_1:
-            st.metric('Forbrukt CO2 bergvarme', str(round (co2_gv_ligning[-1])) + ' tonn')
-        with res_column_2:
-            st.metric('Forbrukt CO2 elektrisk oppvarming', str(round (co2_el_ligning[-1])) + ' tonn')
-        with res_column_3:
-            st.metric('CO2 besparelse', str(round (co2_el_ligning[-1] - co2_gv_ligning[-1])) + ' tonn')
 
         plt.legend(loc='best')
         plt.grid()
@@ -79,6 +82,14 @@ class Co2:
         plt.ylabel("CO2 utslipp [tonn]")
         st.pyplot(plt)
         plt.close()
+
+        res_column_1, res_column_2, res_column_3 = st.columns(3)
+        with res_column_1:
+            st.metric('CO2 Bergvarme', str(round (co2_gv_ligning[-1])) + ' tonn')
+        with res_column_2:
+            st.metric('CO2 Elektrisk oppvarming', str(round (co2_el_ligning[-1])) + ' tonn')
+        with res_column_3:
+            st.metric('CO2 Besparelse', str(round (co2_el_ligning[-1] - co2_gv_ligning[-1])) + ' tonn')
 
 
 
@@ -159,14 +170,6 @@ class Kostnader:
         self.kostnad_el_yearly = kostnad_el_yearly
         self.kostnad_gv_yearly = kostnad_gv_yearly
 
-        cost_column_1, cost_column_2, cost_column_3 = st.columns(3)
-        with cost_column_1:
-            st.metric(label="Årlig driftskostnad bergvarme", value=(str(round(kostnad_gv_yearly, -2)) + " kr"))
-        with cost_column_2:
-            st.metric(label="Årlig driftskostnad elektrisk oppvarming", value=(str(round(kostnad_el_yearly, -2)) + " kr"))
-        with cost_column_3:
-            st.metric('Årlig besparelse med bergvarme', str(round (kostnad_el_yearly - kostnad_gv_yearly, -2)) + ' kr')
-
         st.write('Fra første dag bergvarmeanlegget settes i gang vil dine månedlige utgifter fordele seg '
                  'som i søylediagrammet under.')
 
@@ -183,6 +186,14 @@ class Kostnader:
         plt.ylabel("Kostnader [kr]")
         st.pyplot(plt)
         plt.close()
+
+        cost_column_1, cost_column_2, cost_column_3 = st.columns(3)
+        with cost_column_1:
+            st.metric(label="Bergvarme", value=(str(round(kostnad_gv_yearly, -2)) + " kr"))
+        with cost_column_2:
+            st.metric(label="Elektrisk oppvarming", value=(str(round(kostnad_el_yearly, -2)) + " kr"))
+        with cost_column_3:
+            st.metric('Årlig besparelse', str(round (kostnad_el_yearly - kostnad_gv_yearly, -2)) + ' kr')
 
     def gronne_laan (self):
         x_axis = np.array(range(1, 26))
@@ -237,6 +248,7 @@ class Strompriser ():
         self.year = st.selectbox('Hvilken årlig strømpris skal ligge til grunn?',('2021', '2020', '2019', '2018', 'Gjennomsnitt av de siste 4 år'))
         self.region = st.selectbox('Hvilken strømregion skal strømprisen baseres på?',('Sørøst-Norge', 'Sørvest-Norge', 'Midt-Norge', 'Nord-Norge', 'Vest-Norge'))
 
+    @st.cache
     def el_spot_pris (self):
         if self.year == '2018':
             el_spot_hourly = pd.read_csv('CSV/el_spot_hourly_2018.csv', sep=';', on_bad_lines='skip')
@@ -289,39 +301,32 @@ class Dimensjonering:
     def __init__(self):
         pass
 
-    def energi_og_effekt_beregning(self, dekningsgrad, cop, energibehov_arr, energibehov_sum):
-        varmepumpe_storrelse = max (energibehov_arr)
-        beregnet_dekningsgrad = 0
-
+    @st.cache
+    def energi_og_effekt_beregning(self, dekningsgrad, energibehov_arr, energibehov_sum):
+        varmepumpe_storrelse = max(energibehov_arr)
+        beregnet_dekningsgrad = 100.5
         if dekningsgrad == 100:
-            energibehov_arr_gv = energibehov_arr
-            energibehov_sum_gv = int(sum(energibehov_arr_gv))
-            varmepumpe_storrelse = float("{:.1f}".format(max(energibehov_arr_gv)))
-        else:
-            for p in range (0,1000):
-                effekt_sum = 0
-                liste = np.zeros(8760, int)
-                for i, effekt in enumerate (energibehov_arr):
-                    if effekt < varmepumpe_storrelse:
-                        effekt_sum += effekt
-                        liste[i] = effekt
-                    else:
-                        liste[i] = varmepumpe_storrelse
-                beregnet_dekningsgrad = (effekt_sum / energibehov_sum) * 100
-                varmepumpe_storrelse = varmepumpe_storrelse - 0.01
-                if (beregnet_dekningsgrad - dekningsgrad) < 0.1:
-                    break
-            energibehov_arr_gv = np.array(liste)
-            energibehov_sum_gv = int(sum(energibehov_arr_gv))
-            varmepumpe_storrelse = float("{:.1f}".format(varmepumpe_storrelse))
+            return np.array(energibehov_arr), round(np.sum(energibehov_arr)), float("{:.1f}".format(varmepumpe_storrelse))
+
+        while (beregnet_dekningsgrad / dekningsgrad) > 1:
+            tmp_liste_h = np.zeros (8760)
+            for i, timeverdi in enumerate (energibehov_arr):
+                if timeverdi > varmepumpe_storrelse:
+                    tmp_liste_h[i] = varmepumpe_storrelse
+                else:
+                    tmp_liste_h[i] = timeverdi
+            
+            beregnet_dekningsgrad = (sum (tmp_liste_h) / energibehov_sum) * 100
+
+            varmepumpe_storrelse -= 0.05
         
-        return energibehov_arr_gv, energibehov_sum_gv, varmepumpe_storrelse
+        return np.array (tmp_liste_h), round (np.sum (tmp_liste_h)), float("{:.1f}".format(varmepumpe_storrelse))
 
     def angi_dekningsgrad(self):
-        return st.number_input('Hvor stor prosentandel av energibehovet skal bergvarmeanlegget dekke? [%]', value=100, min_value=80, max_value=100, step = 1)
+        return st.number_input('Dekningsgrad til bergvarmeanlegget [%]', value=100, min_value=80, max_value=100, step = 1)
 
     def angi_cop(self):
-        return st.number_input('Velg årsvarmefaktor (SCOP)', value=3.5, min_value=2.0, max_value=4.0, step = 0.1)
+        return st.number_input('Årsvarmefaktor (SCOP) til varmepumpen', value=3.5, min_value=2.0, max_value=4.0, step = 0.1)
 
     def dekning(self, energibehov_arr_gv, energibehov_arr, cop):
         levert_fra_bronner_arr = energibehov_arr_gv - energibehov_arr_gv / cop
@@ -371,9 +376,14 @@ class Dimensjonering:
 
         months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des']
         x_axis = np.arange(len(months))
-        plt.bar(x_axis, spisslast_arr, 0.4, label='Spisslast', color = '#F0F4E3', bottom = energibehov_arr_gv)
-        plt.bar(x_axis, levert_fra_bronner_arr, 0.4, label='Levert energi \nfra brønn(er)', color ='#b7dc8f', bottom = kompressor_arr)
-        plt.bar(x_axis, kompressor_arr, 0.4, label='Strømforbruk \nvarmepumpe', color = '#1d3c34')
+
+        spisslast_label='Dekkes ikke\nav bergvarme:\n' + str(sum(spisslast_arr)) + ' kWh'
+        levert_energi_label='Levert energi \nfra brønn(er):\n' + str(sum(levert_fra_bronner_arr)) + ' kWh'
+        kompressor_label='Strømforbruk \nvarmepumpe:\n' + str(sum(kompressor_arr)) + ' kWh'
+
+        plt.bar(x_axis, levert_fra_bronner_arr, 0.4, label=levert_energi_label, color ='#b7dc8f', bottom = kompressor_arr)
+        plt.bar(x_axis, kompressor_arr, 0.4, label=kompressor_label, color = '#1d3c34')
+        plt.bar(x_axis, spisslast_arr, 0.4, label=spisslast_label, color = '#F0F4E3', bottom = energibehov_arr_gv)
         plt.rcParams['axes.facecolor'] = '#FFFFFF'
         plt.rcParams['savefig.facecolor'] = '#F6F8F1'
         plt.xticks(x_axis, months)
@@ -420,6 +430,7 @@ class Energibehov:
     def __init__(self):
         pass
 
+    @st.cache
     def totalt_behov_fra_fil(self, stasjon_id, areal):
         dhw = 'Database/' + stasjon_id + '_dhw.csv'
         romoppvarming = 'Database/' + stasjon_id + '_romoppvarming.csv'
@@ -428,13 +439,7 @@ class Energibehov:
         return dhw_arr, romoppvarming_arr
 
     def resultater(self, dhw_sum, romoppvarming_sum, energibehov_sum):
-        column_1, column_2, column_3 = st.columns(3)
-        with column_1:
-            st.metric(label="Årlig varmtvannsbehov", value=(str(round (dhw_sum,-1)) + " kWh"))
-        with column_2:
-            st.metric(label="Årlig romoppvarmingsebehov", value=(str(round(romoppvarming_sum, -1)) + " kWh"))
-        with column_3:
-            st.metric(label="Årlig oppvarmingsbehov", value=(str(round ((dhw_sum + romoppvarming_sum), -1)) + " kWh"))
+        st.metric(label="Årlig oppvarmingsbehov", value=(str(round ((dhw_sum + romoppvarming_sum), -1)) + " kWh"))
 
     def plot(self, dhw_arr, romoppvarming_arr):
         dhw_arr = hour_to_month (dhw_arr)
@@ -459,13 +464,8 @@ class Energibehov:
         return int(dhw_sum), int(romoppvarming_sum), int(energibehov_sum)
         
     def juster_behov(self, dhw_sum, romoppvarming_sum, dhw_arr, romoppvarming_arr):
-        with st.expander('Juster oppvarmingsbehovet dersom du ønsker det'):
-            column_1, column_2 = st.columns(2)
-            with column_1:
-                dhw_sum_ny = st.number_input('Varmtvann [kWh]', min_value = int(dhw_sum*0.1), max_value = int(dhw_sum*5), value = round(dhw_sum, -1), step = int(500))
-            with column_2:
-                romoppvarming_sum_ny = st.number_input('Romoppvarming [kWh]', min_value = int(romoppvarming_sum*0.1), max_value = int(romoppvarming_sum*5), value = round (romoppvarming_sum, -1), step = int(500))
-
+        dhw_sum_ny = st.number_input('Varmtvannsbehov [kWh]', min_value = int(dhw_sum*0.1), max_value = int(dhw_sum*5), value = round(dhw_sum, -1), step = int(500))
+        romoppvarming_sum_ny = st.number_input('Romoppvarmingsbehov [kWh]', min_value = int(romoppvarming_sum*0.1), max_value = int(romoppvarming_sum*5), value = round (romoppvarming_sum, -1), step = int(500))
         dhw_prosent = dhw_sum_ny / dhw_sum
         romoppvarming_prosent = romoppvarming_sum_ny / romoppvarming_sum
 
@@ -482,6 +482,7 @@ class Temperaturdata ():
         self.lat = lat
         self.long = long
 
+    @st.cache
     def temperaturserie_fra_fil(self):
         serie = 'Database/' + self.stasjon_id + '_temperatur.csv'
         temperatur_arr = pd.read_csv(serie, sep=',', on_bad_lines='skip').to_numpy()
@@ -491,6 +492,7 @@ class Temperaturdata ():
         arr = self.temperaturserie_fra_fil()
         return float(np.average(arr))
 
+    @st.cache
     def importer_csv (self):
         stasjonsliste = pd.read_csv('Database/Stasjoner.csv', sep=',',on_bad_lines='skip')
         return stasjonsliste
@@ -515,12 +517,17 @@ class Temperaturdata ():
 
 class Energibronn:
     def __init__(self, lat, long):
-        self.importer_csv ()
+        df = self.importer_csv ()
+        self.les_csv(df)
         self.lat = lat
         self.long = long
 
+    @st.cache
     def importer_csv (self):
         energibronner_df = pd.read_csv('CSV/energibronner.csv', sep=';', on_bad_lines='skip', low_memory=False)
+        return energibronner_df
+
+    def les_csv (self, energibronner_df):
         self.energibronner_boret_lengde_til_berg = energibronner_df.iloc[:, 10]
         self.energibronner_lat = energibronner_df.iloc[:, -2]
         self.energibronner_long = energibronner_df.iloc[:, -3]
@@ -542,7 +549,6 @@ class Energibronn:
 
 
 
-
 class Gis:
     def __init__(self):
         pass
@@ -550,6 +556,11 @@ class Gis:
     def adresse_til_koordinat (self, adresse):
         geolocator = Nominatim(user_agent="my_request")
         location = geolocator.geocode(adresse, timeout=None)
+        if location is None:
+            st.error ('Ugyldig adresse. Prøv igjen!')
+            lott = load_lottie('https://assets2.lottiefiles.com/packages/lf20_mxbhb9vi.json')
+            st_lottie(lott)
+            st.stop()
         lat = location.latitude
         long = location.longitude
         return lat, long
@@ -621,7 +632,7 @@ class Forside:
         return Image.open('Bilder/AsplanViak_Favicon_16x16.png')
 
     def forsidebilde(self):
-        image = Image.open('Bilder/AsplanViak_illustrasjoner-12.png')
+        image = Image.open('Bilder/hovedlogo.png')
         st.image(image)
 
     def innstillinger(self):
@@ -640,8 +651,8 @@ class Forside:
         st.markdown(hide_menu_style,unsafe_allow_html=True)
 
     def input(self):
-         adresse = st.text_input('Hva er din adresse?', value='Karl Johans Gate 22')
-         bolig_areal = st.number_input('Oppgi oppvarmet bruksareal [m2]', min_value=1, value=150, max_value=1000)
+         bolig_areal = st.number_input('Oppgi oppvarmet bruksareal [m2]', min_value=1, value=150, max_value=1000, step=10)
+         adresse = st.text_input('Hva er din adresse?', placeholder = 'Karl Johans Gate 22, Oslo')
          return adresse, bolig_areal
 
     def start_button(self):
