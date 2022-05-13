@@ -126,7 +126,9 @@ def main ():
 
     #Fremvisning - Dimensjonering 
     st.header('Dimensjonering av ditt bergvarmeanlegg') 
-    dimensjonering_obj.varighetsdiagram_bar(spisslast_arr, energibehov_arr_gv, kompressor_arr, levert_fra_bronner_arr)
+    #dimensjonering_obj.varighetsdiagram_bar(spisslast_arr, energibehov_arr_gv, kompressor_arr, levert_fra_bronner_arr)
+    dimensjonering_obj.varighetsdiagram(energibehov_arr, energibehov_arr_gv, kompressor_arr)
+
     dimensjonering_obj.bronn_resultater(antall_meter, varmepumpe_storrelse, antall_bronner)
 
     with st.expander('Hvordan dimensjoneres et bergvarmeanlegg?'):

@@ -203,22 +203,58 @@ class Kostnader:
         st.write('Fra første dag bergvarmeanlegget settes i gang vil dine månedlige utgifter fordele seg '
                  'som i søylediagrammet under.')
                  
-
         months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des']
-        x_axis = np.arange(len(months))
+        #---
+        wide_form = pd.DataFrame({
+            'Måneder' : months,
+            'Bergvarme' : kostnad_gv_monthly, 
+            'Elektrisk oppvarming' : kostnad_el_monthly
+            })
 
-    
-        data = pd.DataFrame({'Måneder' : months, 'Bergvarme' : kostnad_gv_monthly, 'Elektrisk oppvarming' : kostnad_el_monthly})
-        c = alt.Chart(data).transform_fold(
+        c1 = alt.Chart(wide_form).transform_fold(
             ['Bergvarme', 'Elektrisk oppvarming'],
-            as_=['Forklaring', 'Kostnader (kr)']).mark_bar().encode(
-            x=alt.X('Måneder:N', sort=x_axis),
-            y='Kostnader (kr):Q',
-            color=alt.Color('Forklaring:N', scale=alt.Scale(domain=['Bergvarme', 'Elektrisk oppvarming'], 
-            range=['#48a23f', '#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)),
-            column=('Forklaring:N'))
-        st.altair_chart(c, use_container_width=False)
+            as_=['key', 'Kostnader (kr)']).mark_bar(opacity=1).encode(
+                x=alt.X('Måneder:N', sort=months, title=None),
+                y=alt.Y('Kostnader (kr):Q',stack=None),
+                color=alt.Color('key:N', scale=alt.Scale(domain=['Bergvarme'], 
+                range=['#48a23f']), legend=alt.Legend(orient='top', direction='vertical', title=None)
+                ))
+
+        c2 = alt.Chart(wide_form).transform_fold(
+            ['Bergvarme', 'Elektrisk oppvarming'],
+            as_=['key', 'Kostnader (kr)']).mark_bar(opacity=1).encode(
+                x=alt.X('Måneder:N', sort=months, title=None),
+                y=alt.Y('Kostnader (kr):Q',stack=None, title=None),
+                color=alt.Color('key:N', scale=alt.Scale(domain=['Elektrisk oppvarming'], 
+                range=['#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)
+                ))
+        col1, col2 = st.columns(2)
+        with col1:
+            st.altair_chart(c1, use_container_width=True)  
+        with col2:
+            st.altair_chart(c2, use_container_width=True)  
         
+
+
+
+
+                #alt.Color('key:N', scale=alt.Scale(domain=['Bergvarme', 'Elektrisk oppvarming'], 
+                #range=['#48a23f', '#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)),
+                #column=alt.Column('Måneder:N', sort=months, header=alt.Header(title=None))            
+                #).resolve_scale(x='shared').configure_view(stroke='transparent')
+
+        #c = alt.Chart(wide_form).transform_fold(
+        #    ['Bergvarme', 'Elektrisk oppvarming'],
+        #    as_=['key', 'Kostnader (kr)']).mark_bar().encode(
+        #        x=alt.X('Måneder:N', sort=months),
+        #        #x=alt.X('key:N', axis=None),
+        #        y='Kostnader (kr):Q',
+        #        color=alt.Color('key:N', scale=alt.Scale(domain=['Bergvarme', 'Elektrisk oppvarming'], 
+        #        range=['#48a23f', '#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)),
+        #        #column=alt.Column('Måneder:N', sort=months, header=alt.Header(title=None))            
+        #        ).resolve_scale(x='shared').configure_view(stroke='transparent')
+            
+
         #Lock
         #lock = RendererAgg.lock
         #with lock:
@@ -398,27 +434,45 @@ class Dimensjonering:
             st.metric(label="Spisslast", value=(str(round (spisslast_sum, -1)) + " kWh"))
 
     def varighetsdiagram(self, energibehov_arr, energibehov_arr_gv, kompressor_arr):
-        x_arr = np.array(range(0, len(energibehov_arr)))
+
+        wide_form = pd.DataFrame({
+            'Varighet (timer)' : np.array(range(0, len(energibehov_arr))),
+            'Spisslast (ikke bergvarme)' : np.sort(energibehov_arr)[::-1], 
+            'Levert energi fra brønn(er)' : np.sort(energibehov_arr_gv)[::-1],
+            'Strømforbruk varmepumpe' : np.sort(kompressor_arr)[::-1]
+            })
+
+        c = alt.Chart(wide_form).transform_fold(
+            ['Spisslast (ikke bergvarme)', 'Levert energi fra brønn(er)', 'Strømforbruk varmepumpe'],
+            as_=['key', 'Effekt (kW)']).mark_area().encode(
+                x=alt.X('Varighet (timer):Q'),
+                y='Effekt (kW):Q',
+                color=alt.Color('key:N', scale=alt.Scale(domain=['Spisslast (ikke bergvarme)', 'Levert energi fra brønn(er)', 'Strømforbruk varmepumpe'], 
+                range=['#ffdb9a', '#48a23f', '#1d3c34']), legend=alt.Legend(orient='top', direction='vertical', title=None))
+            )
+
+        st.altair_chart(c, use_container_width=True)
+
 
         #Lock
-        lock = RendererAgg.lock
-        with lock:
-            plt.fill_between(x_arr, np.sort(energibehov_arr)[::-1], label='Spisslast', color = '#F0F4E3')
-            plt.fill_between(x_arr, np.sort(energibehov_arr_gv)[::-1], label='Levert energi fra brønn(er)', color ='#b7dc8f')
-            plt.fill_between(x_arr, np.sort(kompressor_arr)[::-1], label='Strømforbruk varmepumpe', color = '#1d3c34')
+        #lock = RendererAgg.lock
+        #with lock:
+        #    plt.fill_between(x_arr, np.sort(energibehov_arr)[::-1], label='Spisslast', color = '#F0F4E3')
+        #    plt.fill_between(x_arr, np.sort(energibehov_arr_gv)[::-1], label='Levert energi fra brønn(er)', color ='#b7dc8f')
+        #    plt.fill_between(x_arr, np.sort(kompressor_arr)[::-1], label='Strømforbruk varmepumpe', color = '#1d3c34')
             
-            plt.xlabel('Varighet [timer]')
-            plt.ylabel('Effekt [kW]')
+        #    plt.xlabel('Varighet [timer]')
+        #    plt.ylabel('Effekt [kW]')
 
-            plt.rcParams['axes.facecolor'] = '#FFFFFF'
-            plt.rcParams['savefig.facecolor'] = '#F6F8F1'
+        #    plt.rcParams['axes.facecolor'] = '#FFFFFF'
+        #    plt.rcParams['savefig.facecolor'] = '#F6F8F1'
 
-            plt.xlim(0,8760)
-            plt.ylim(0, max(energibehov_arr))
-            plt.grid()
-            plt.legend()
-            st.pyplot (plt)
-            plt.close()
+        #    plt.xlim(0,8760)
+        #    plt.ylim(0, max(energibehov_arr))
+        #    plt.grid()
+        #    plt.legend()
+        #    st.pyplot (plt)
+        #    plt.close()
 
     def varighetsdiagram_bar(self, spisslast_arr, energibehov_arr_gv, kompressor_arr, levert_fra_bronner_arr):
         spisslast_arr = hour_to_month (spisslast_arr)
@@ -516,11 +570,15 @@ class Energibehov:
         c = alt.Chart(data).transform_fold(
             ['Romoppvarmingsbehov', 'Varmtvannsbehov'],
             as_=['Forklaring', 'Oppvarmingsbehov (kWh)']).mark_bar().encode(
-            x=alt.X('Måneder:N', sort=months),
+            x=alt.X('Måneder:N', sort=months, title=None),
             y='Oppvarmingsbehov (kWh):Q',
             color=alt.Color('Forklaring:N', scale=alt.Scale(domain=['Romoppvarmingsbehov', 'Varmtvannsbehov'], 
-            range=['#48a23f', '#1d3c34']), legend=alt.Legend(orient='top', direction='vertical', title=None)))
+            range=['#4a625c', '#8e9d99']), legend=alt.Legend(orient='top', direction='vertical', title=None)))
         st.altair_chart(c, use_container_width=True)
+
+        
+
+
 
         #plt.bar(x_axis, dhw_arr, 0.4, label = 'Varmtvannsbehov', color = '#1d3c34')
         #plt.bar(x_axis, romoppvarming_arr, 0.4, label = 'Romoppvarmingsbehov', color = '#48a23f', bottom = dhw_arr)
