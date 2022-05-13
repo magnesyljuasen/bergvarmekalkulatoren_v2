@@ -11,6 +11,7 @@ from streamlit_folium import folium_static
 from geopy.geocoders import Nominatim
 from streamlit_lottie import st_lottie
 import requests
+from matplotlib.backends.backend_agg import RendererAgg
 
 def load_lottie(url: str):
     r = requests.get(url)
@@ -68,20 +69,23 @@ class Co2:
         co2_el_ligning = co2_el_yearly * x_axis
         co2_gv_ligning = co2_gv_yearly * x_axis
 
-        plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        plt.rcParams['savefig.facecolor'] = '#F6F8F1'
+        #Lock
+        lock = RendererAgg.lock
+        with lock:
+            plt.rcParams['axes.facecolor'] = '#FFFFFF'
+            plt.rcParams['savefig.facecolor'] = '#F6F8F1'
 
-        #elektrisk_oppvarming_label = 'Elektrisk oppvarming: ' + str(round (co2_el_ligning[-1])) + ' tonn'
-        #bergvarme_label = 'Bergvarme: ' + str(round (co2_gv_ligning[-1])) + ' tonn'
-        plt.plot(x_axis, co2_el_ligning, label='Elektrisk oppvarming', color = '#880808')
-        plt.plot(x_axis, co2_gv_ligning, label='Bergvarme', color = '#48a23f')
+            #elektrisk_oppvarming_label = 'Elektrisk oppvarming: ' + str(round (co2_el_ligning[-1])) + ' tonn'
+            #bergvarme_label = 'Bergvarme: ' + str(round (co2_gv_ligning[-1])) + ' tonn'
+            plt.plot(x_axis, co2_el_ligning, label='Elektrisk oppvarming', color = '#880808')
+            plt.plot(x_axis, co2_gv_ligning, label='Bergvarme', color = '#48a23f')
 
-        plt.legend(loc='best')
-        plt.grid()
-        plt.xlabel('År')
-        plt.ylabel("CO2 utslipp [tonn]")
-        st.pyplot(plt)
-        plt.close()
+            plt.legend(loc='best')
+            plt.grid()
+            plt.xlabel('År')
+            plt.ylabel("CO2 utslipp [tonn]")
+            st.pyplot(plt)
+            plt.close()
 
         res_column_1, res_column_2, res_column_3 = st.columns(3)
         with res_column_1:
@@ -138,17 +142,20 @@ class Kostnader:
         gv_ligning = self.kostnad_gv_yearly * x_axis + self.investeringskostnad()
         self.nedbetalingstid = round(self.investeringskostnad() / (self.kostnad_el_yearly - self.kostnad_gv_yearly))
         self.besparelse = round (el_ligning [-1] - gv_ligning [-1], -2)
-        plt.plot(x_axis, el_ligning, label='Elektrisk oppvarming', color = '#880808')
-        plt.plot(x_axis, gv_ligning, label='Bergvarme', color = '#48a23f')
-        plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-        plt.legend(loc='best')
-        plt.grid()
-        plt.xlim(0,25)
-        plt.xlabel('År')
-        plt.ylabel("Kostnader [kroner]")
-        st.pyplot(plt)
-        plt.close()
+        #Lock
+        lock = RendererAgg.lock
+        with lock:
+            plt.plot(x_axis, el_ligning, label='Elektrisk oppvarming', color = '#880808')
+            plt.plot(x_axis, gv_ligning, label='Bergvarme', color = '#48a23f')
+            plt.rcParams['axes.facecolor'] = '#FFFFFF'
+            plt.rcParams['savefig.facecolor'] = '#F6F8F1'
+            plt.legend(loc='best')
+            plt.grid()
+            plt.xlim(0,25)
+            plt.xlabel('År')
+            plt.ylabel("Kostnader [kroner]")
+            st.pyplot(plt)
+            plt.close()
 
         res_column_1, res_column_2, res_column_3 = st.columns(3)
         with res_column_1:
@@ -176,16 +183,19 @@ class Kostnader:
         months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des']
         x_axis = np.arange(len(months))
         
-        plt.bar(x_axis - 0.2, kostnad_el_monthly, 0.4, label='Elektrisk oppvarming', color = '#880808')
-        plt.bar(x_axis + 0.2, kostnad_gv_monthly, 0.4, label='Bergvarme', color = '#48a23f')
-        plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-        plt.xticks(x_axis, months)
-        plt.legend(loc='best')
-        plt.grid()
-        plt.ylabel("Kostnader [kr]")
-        st.pyplot(plt)
-        plt.close()
+        #Lock
+        lock = RendererAgg.lock
+        with lock:
+            plt.bar(x_axis - 0.2, kostnad_el_monthly, 0.4, label='Elektrisk oppvarming', color = '#880808')
+            plt.bar(x_axis + 0.2, kostnad_gv_monthly, 0.4, label='Bergvarme', color = '#48a23f')
+            plt.rcParams['axes.facecolor'] = '#FFFFFF'
+            plt.rcParams['savefig.facecolor'] = '#F6F8F1'
+            plt.xticks(x_axis, months)
+            plt.legend(loc='best')
+            plt.grid()
+            plt.ylabel("Kostnader [kr]")
+            st.pyplot(plt)
+            plt.close()
 
         cost_column_1, cost_column_2, cost_column_3 = st.columns(3)
         with cost_column_1:
@@ -225,17 +235,20 @@ class Kostnader:
 
         gv_ligning = gv_ligning_1 + gv_ligning_2
 
-        plt.plot(x_axis, el_ligning, label='Elektrisk oppvarming', color = '#880808')
-        plt.plot(x_axis_laan, gv_ligning, label='Bergvarme m/ grønt lån', color = '#48a23f')
-        plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-        plt.legend(loc='best')
-        plt.grid()
-        plt.xlim(0,25)
-        plt.xlabel('År')
-        plt.ylabel("Kostnader [kroner]")
-        st.pyplot(plt)
-        plt.close()
+        #Lock
+        lock = RendererAgg.lock
+        with lock:
+            plt.plot(x_axis, el_ligning, label='Elektrisk oppvarming', color = '#880808')
+            plt.plot(x_axis_laan, gv_ligning, label='Bergvarme m/ grønt lån', color = '#48a23f')
+            plt.rcParams['axes.facecolor'] = '#FFFFFF'
+            plt.rcParams['savefig.facecolor'] = '#F6F8F1'
+            plt.legend(loc='best')
+            plt.grid()
+            plt.xlim(0,25)
+            plt.xlabel('År')
+            plt.ylabel("Kostnader [kroner]")
+            st.pyplot(plt)
+            plt.close()
 
 
 
@@ -351,22 +364,25 @@ class Dimensjonering:
     def varighetsdiagram(self, energibehov_arr, energibehov_arr_gv, kompressor_arr):
         x_arr = np.array(range(0, len(energibehov_arr)))
 
-        plt.fill_between(x_arr, np.sort(energibehov_arr)[::-1], label='Spisslast', color = '#F0F4E3')
-        plt.fill_between(x_arr, np.sort(energibehov_arr_gv)[::-1], label='Levert energi fra brønn(er)', color ='#b7dc8f')
-        plt.fill_between(x_arr, np.sort(kompressor_arr)[::-1], label='Strømforbruk varmepumpe', color = '#1d3c34')
-        
-        plt.xlabel('Varighet [timer]')
-        plt.ylabel('Effekt [kW]')
+        #Lock
+        lock = RendererAgg.lock
+        with lock:
+            plt.fill_between(x_arr, np.sort(energibehov_arr)[::-1], label='Spisslast', color = '#F0F4E3')
+            plt.fill_between(x_arr, np.sort(energibehov_arr_gv)[::-1], label='Levert energi fra brønn(er)', color ='#b7dc8f')
+            plt.fill_between(x_arr, np.sort(kompressor_arr)[::-1], label='Strømforbruk varmepumpe', color = '#1d3c34')
+            
+            plt.xlabel('Varighet [timer]')
+            plt.ylabel('Effekt [kW]')
 
-        plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        plt.rcParams['savefig.facecolor'] = '#F6F8F1'
+            plt.rcParams['axes.facecolor'] = '#FFFFFF'
+            plt.rcParams['savefig.facecolor'] = '#F6F8F1'
 
-        plt.xlim(0,8760)
-        plt.ylim(0, max(energibehov_arr))
-        plt.grid()
-        plt.legend()
-        st.pyplot (plt)
-        plt.close()
+            plt.xlim(0,8760)
+            plt.ylim(0, max(energibehov_arr))
+            plt.grid()
+            plt.legend()
+            st.pyplot (plt)
+            plt.close()
 
     def varighetsdiagram_bar(self, spisslast_arr, energibehov_arr_gv, kompressor_arr, levert_fra_bronner_arr):
         spisslast_arr = hour_to_month (spisslast_arr)
@@ -381,17 +397,20 @@ class Dimensjonering:
         levert_energi_label='Levert energi \nfra brønn(er):\n' + str(sum(levert_fra_bronner_arr)) + ' kWh'
         kompressor_label='Strømforbruk \nvarmepumpe:\n' + str(sum(kompressor_arr)) + ' kWh'
 
-        plt.bar(x_axis, levert_fra_bronner_arr, 0.4, label=levert_energi_label, color ='#b7dc8f', bottom = kompressor_arr)
-        plt.bar(x_axis, kompressor_arr, 0.4, label=kompressor_label, color = '#1d3c34')
-        plt.bar(x_axis, spisslast_arr, 0.4, label=spisslast_label, color = '#F0F4E3', bottom = energibehov_arr_gv)
-        plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-        plt.xticks(x_axis, months)
-        plt.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=3)
-        plt.grid()
-        plt.ylabel("Oppvarmingsbehov [kWh]")
-        st.pyplot(plt)
-        plt.close()
+        #Lock
+        lock = RendererAgg.lock
+        with lock:
+            plt.bar(x_axis, levert_fra_bronner_arr, 0.4, label=levert_energi_label, color ='#b7dc8f', bottom = kompressor_arr)
+            plt.bar(x_axis, kompressor_arr, 0.4, label=kompressor_label, color = '#1d3c34')
+            plt.bar(x_axis, spisslast_arr, 0.4, label=spisslast_label, color = '#F0F4E3', bottom = energibehov_arr_gv)
+            plt.rcParams['axes.facecolor'] = '#FFFFFF'
+            plt.rcParams['savefig.facecolor'] = '#F6F8F1'
+            plt.xticks(x_axis, months)
+            plt.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=3)
+            plt.grid()
+            plt.ylabel("Oppvarmingsbehov [kWh]")
+            st.pyplot(plt)
+            plt.close()
 
     def antall_meter(self, varmepumpe_storrelse, levert_fra_bronner, cop):
         energi_per_meter = 80  # kriterie 1
@@ -446,16 +465,19 @@ class Energibehov:
         romoppvarming_arr = hour_to_month (romoppvarming_arr)
         months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des']
         x_axis = np.arange(len(months))
-        plt.bar(x_axis, dhw_arr, 0.4, label = 'Varmtvannsbehov', color = '#1d3c34')
-        plt.bar(x_axis, romoppvarming_arr, 0.4, label = 'Romoppvarmingsbehov', color = '#48a23f', bottom = dhw_arr)
-        plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-        plt.xticks(x_axis, months)
-        plt.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=3)
-        plt.grid()
-        plt.ylabel("Oppvarmingsbehov [kWh]")
-        st.pyplot(plt)
-        plt.close()
+        #Lock
+        lock = RendererAgg.lock
+        with lock:
+            plt.bar(x_axis, dhw_arr, 0.4, label = 'Varmtvannsbehov', color = '#1d3c34')
+            plt.bar(x_axis, romoppvarming_arr, 0.4, label = 'Romoppvarmingsbehov', color = '#48a23f', bottom = dhw_arr)
+            plt.rcParams['axes.facecolor'] = '#FFFFFF'
+            plt.rcParams['savefig.facecolor'] = '#F6F8F1'
+            plt.xticks(x_axis, months)
+            plt.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=3)
+            plt.grid()
+            plt.ylabel("Oppvarmingsbehov [kWh]")
+            st.pyplot(plt)
+            plt.close()
 
     def aarlig_behov(self, dhw_arr, romoppvarming_arr):
         dhw_sum = int(sum(dhw_arr))
