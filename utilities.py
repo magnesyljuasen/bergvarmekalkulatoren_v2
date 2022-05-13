@@ -558,7 +558,7 @@ class Gis:
         location = geolocator.geocode(adresse, timeout=None)
         if location is None:
             st.error ('Ugyldig adresse. Prøv igjen!')
-            lott = load_lottie('https://assets2.lottiefiles.com/packages/lf20_mxbhb9vi.json')
+            lott = load_lottie('https://assets2.lottiefiles.com/packages/lf20_i0hpsr18.json')
             st_lottie(lott)
             st.stop()
         lat = location.latitude
