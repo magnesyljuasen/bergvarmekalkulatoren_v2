@@ -66,111 +66,111 @@ def main ():
         """)
         st.stop()
 
-    with st.spinner('Kalkulerer'):
-        #-----------
-        #Beregning - GIS
-        adresse_lat, adresse_long = Gis().adresse_til_koordinat(adresse)
-        dybde_til_fjell, energibronn_lat, energibronn_long = Energibronn(adresse_lat, adresse_long).dybde_til_fjell()
-        temperaturdata_obj = Temperaturdata(adresse_lat,adresse_long)
-        stasjon_id, stasjon_lat, stasjon_long, distanse_min = temperaturdata_obj.nearmeste_stasjon()
-        #st.write (temperaturdata_obj.gjennomsnittstemperatur())
-        
-        st.title('Resultater')
-        #Fremvisning - GIS
-        st.header('Oversiktskart')
-        Gis().kart(stasjon_lat, adresse_lat, energibronn_lat, stasjon_long, adresse_long, energibronn_long)
-        with st.expander ('Hva viser kartet?'):
-            st.write (""" Kartet viser adresse, nærmeste eksisterende energibrønn og nærmeste værstasjon med fullstendige. 
-            Nærmeste eksisterende energibrønn brukes til å estimere dybde til fjell i området. 
-            Fra værstasjonen hentes det inn målt temperatur per time for de siste 4 år. """)
+    #with st.spinner('Kalkulerer'):
+    #-----------
+    #Beregning - GIS
+    adresse_lat, adresse_long = Gis().adresse_til_koordinat(adresse)
+    dybde_til_fjell, energibronn_lat, energibronn_long = Energibronn(adresse_lat, adresse_long).dybde_til_fjell()
+    temperaturdata_obj = Temperaturdata(adresse_lat,adresse_long)
+    stasjon_id, stasjon_lat, stasjon_long, distanse_min = temperaturdata_obj.nearmeste_stasjon()
+    #st.write (temperaturdata_obj.gjennomsnittstemperatur())
 
-        #-----------Sidebar
-        with st.sidebar:
-            st.title('Variabler')
-            st.markdown('Parameterene under kan justeres ved behov')
+    st.title('Resultater')
+    #Fremvisning - GIS
+    st.header('Oversiktskart')
+    Gis().kart(stasjon_lat, adresse_lat, energibronn_lat, stasjon_long, adresse_long, energibronn_long)
+    with st.expander ('Hva viser kartet?'):
+        st.write (""" Kartet viser adresse, nærmeste eksisterende energibrønn og nærmeste værstasjon med fullstendige. 
+        Nærmeste eksisterende energibrønn brukes til å estimere dybde til fjell i området. 
+        Fra værstasjonen hentes det inn målt temperatur per time for de siste 4 år. """)
 
-
-        #Beregning - Energibehov
-        energibehov_obj = Energibehov()
-        dhw_arr, romoppvarming_arr = energibehov_obj.totalt_behov_fra_fil(stasjon_id, bolig_areal)
-        dhw_sum, romoppvarming_sum, energibehov_sum = energibehov_obj.aarlig_behov(dhw_arr, romoppvarming_arr)
-        #-----------Sidebar
-        with st.sidebar:
-            dhw_sum, romoppvarming_sum, dhw_arr, romoppvarming_arr = energibehov_obj.juster_behov(dhw_sum, romoppvarming_sum, dhw_arr, romoppvarming_arr)
-        #-----------
-        #energibehov_obj.resultater(dhw_sum, romoppvarming_sum, energibehov_sum)
-
-        #Fremvisning - Energibehov
-        st.header('Oppvarmingsbehov for din bolig')
-        energibehov_obj.plot(dhw_arr, romoppvarming_arr)
-        with st.expander ('Hvordan beregnes oppvarmingsbehovet?'):
-            st.write (""" Gjennomsnittstemperatur fra de siste 4 år og oppgitt boligareal benyttes til å estimere 
-            oppvarmingsbehovet for din bolig. Beregningen gjøres ved hjelp av PROFet som er utviklet av Sintef. 
-            Verktøyet estimerer både det årlige behovet for romoppvarming- og varmtvann som til sammen
-            utgjør det totale årlige oppvarmingsbehovet for din bolig. """)
-
-        energibehov_arr = (dhw_arr + romoppvarming_arr).reshape(-1)
+    #-----------Sidebar
+    with st.sidebar:
+        st.title('Variabler')
+        st.markdown('Parameterene under kan justeres ved behov')
 
 
-        #Beregning - Dimensjonering
-        dimensjonering_obj = Dimensjonering()
-        #-----------Sidebar
-        with st.sidebar:       
-            dekningsgrad = dimensjonering_obj.angi_dekningsgrad()
-            cop = dimensjonering_obj.angi_cop()
-        #-----------
-        energibehov_arr_gv, energibehov_sum_gv, varmepumpe_storrelse = dimensjonering_obj.energi_og_effekt_beregning(dekningsgrad, energibehov_arr, energibehov_sum)
-        levert_fra_bronner_arr, kompressor_arr, spisslast_arr, levert_fra_bronner_sum, kompressor_sum, spisslast_sum = dimensjonering_obj.dekning(energibehov_arr_gv, energibehov_arr, cop)
-        antall_meter = dimensjonering_obj.antall_meter(varmepumpe_storrelse, levert_fra_bronner_sum, cop)
-        antall_bronner = dimensjonering_obj.antall_bronner (antall_meter)
+    #Beregning - Energibehov
+    energibehov_obj = Energibehov()
+    dhw_arr, romoppvarming_arr = energibehov_obj.totalt_behov_fra_fil(stasjon_id, bolig_areal)
+    dhw_sum, romoppvarming_sum, energibehov_sum = energibehov_obj.aarlig_behov(dhw_arr, romoppvarming_arr)
+    #-----------Sidebar
+    with st.sidebar:
+        dhw_sum, romoppvarming_sum, dhw_arr, romoppvarming_arr = energibehov_obj.juster_behov(dhw_sum, romoppvarming_sum, dhw_arr, romoppvarming_arr)
+    #-----------
+    #energibehov_obj.resultater(dhw_sum, romoppvarming_sum, energibehov_sum)
 
-        #Fremvisning - Dimensjonering 
-        st.header('Dimensjonering av ditt bergvarmeanlegg') 
-        dimensjonering_obj.varighetsdiagram_bar(spisslast_arr, energibehov_arr_gv, kompressor_arr, levert_fra_bronner_arr)
-        dimensjonering_obj.bronn_resultater(antall_meter, varmepumpe_storrelse, antall_bronner)
-        
-        with st.expander('Hvordan dimensjoneres et bergvarmeanlegg?'):
-            st.write(""" ...
-            
-            """)
-        
+    #Fremvisning - Energibehov
+    st.header('Oppvarmingsbehov for din bolig')
+    energibehov_obj.plot(dhw_arr, romoppvarming_arr)
+    with st.expander ('Hvordan beregnes oppvarmingsbehovet?'):
+        st.write (""" Gjennomsnittstemperatur fra de siste 4 år og oppgitt boligareal benyttes til å estimere 
+        oppvarmingsbehovet for din bolig. Beregningen gjøres ved hjelp av PROFet som er utviklet av Sintef. 
+        Verktøyet estimerer både det årlige behovet for romoppvarming- og varmtvann som til sammen
+        utgjør det totale årlige oppvarmingsbehovet for din bolig. """)
 
-        #Beregning og fremvisning - CO2
-        st.header ('Et miljøvennlig alternativ')
-        Co2().beregning(energibehov_arr, kompressor_sum)
-        with st.expander ('Hvordan beregnes dette?'):
-            st.write(""" ...
-            
-            """)
+    energibehov_arr = (dhw_arr + romoppvarming_arr).reshape(-1)
 
 
-        #Beregning - Kostnader
-        strompriser_obj = Strompriser()
-        #-----------Sidebar
-        with st.sidebar:   
-            strompriser_obj.input()
-        #-----------
-        el_pris = strompriser_obj.beregn_el_pris()
-        kostnader_obj = Kostnader(dybde_til_fjell, varmepumpe_storrelse, antall_meter, kompressor_arr, energibehov_arr_gv, el_pris)
-        #-----------Sidebar
-        with st.sidebar:   
-            kostnader_obj.oppdater_dybde_til_fjell()
-        #-----------
+    #Beregning - Dimensjonering
+    dimensjonering_obj = Dimensjonering()
+    #-----------Sidebar
+    with st.sidebar:       
+        dekningsgrad = dimensjonering_obj.angi_dekningsgrad()
+        cop = dimensjonering_obj.angi_cop()
+    #-----------
+    energibehov_arr_gv, energibehov_sum_gv, varmepumpe_storrelse = dimensjonering_obj.energi_og_effekt_beregning(dekningsgrad, energibehov_arr, energibehov_sum)
+    levert_fra_bronner_arr, kompressor_arr, spisslast_arr, levert_fra_bronner_sum, kompressor_sum, spisslast_sum = dimensjonering_obj.dekning(energibehov_arr_gv, energibehov_arr, cop)
+    antall_meter = dimensjonering_obj.antall_meter(varmepumpe_storrelse, levert_fra_bronner_sum, cop)
+    antall_bronner = dimensjonering_obj.antall_bronner (antall_meter)
+
+    #Fremvisning - Dimensjonering 
+    st.header('Dimensjonering av ditt bergvarmeanlegg') 
+    dimensjonering_obj.varighetsdiagram_bar(spisslast_arr, energibehov_arr_gv, kompressor_arr, levert_fra_bronner_arr)
+    dimensjonering_obj.bronn_resultater(antall_meter, varmepumpe_storrelse, antall_bronner)
+
+    with st.expander('Hvordan dimensjoneres et bergvarmeanlegg?'):
+        st.write(""" ...
+
+        """)
 
 
-        #Fremvisning - Kostnader
-        st.header ('Bergvarme reduserer dine månedlige utgifter')
-        kostnader_obj.monthly_costs()
+    #Beregning og fremvisning - CO2
+    st.header ('Et miljøvennlig alternativ')
+    Co2().beregning(energibehov_arr, kompressor_sum)
+    with st.expander ('Hvordan beregnes dette?'):
+        st.write(""" ...
 
-        st.header ('Investeringskostnad')
-        st.write (""" Den største barrieren når det gjelder etablering av bergvarmeanlegg er investeringskostnaden.
-        Investeringskostnaden inkluderer boring av energibrønn samt installasjon av varmepumpe. """)
-        kostnader_obj.plot_investeringskostnad()
+        """)
 
 
-        #Avslutning
-        st.markdown("""---""")
-        Veienvidere()
-        st.caption('Et verktøy fra Asplan Viak AS | 📧 magne.syljuasen@asplanviak.no')
+    #Beregning - Kostnader
+    strompriser_obj = Strompriser()
+    #-----------Sidebar
+    with st.sidebar:   
+        strompriser_obj.input()
+    #-----------
+    el_pris = strompriser_obj.beregn_el_pris()
+    kostnader_obj = Kostnader(dybde_til_fjell, varmepumpe_storrelse, antall_meter, kompressor_arr, energibehov_arr_gv, el_pris)
+    #-----------Sidebar
+    with st.sidebar:   
+        kostnader_obj.oppdater_dybde_til_fjell()
+    #-----------
+
+
+    #Fremvisning - Kostnader
+    st.header ('Bergvarme reduserer dine månedlige utgifter')
+    kostnader_obj.monthly_costs()
+
+    st.header ('Investeringskostnad')
+    st.write (""" Den største barrieren når det gjelder etablering av bergvarmeanlegg er investeringskostnaden.
+    Investeringskostnaden inkluderer boring av energibrønn samt installasjon av varmepumpe. """)
+    kostnader_obj.plot_investeringskostnad()
+
+
+    #Avslutning
+    st.markdown("""---""")
+    Veienvidere()
+    st.caption('Et verktøy fra Asplan Viak AS | 📧 magne.syljuasen@asplanviak.no')
 
 main ()
