@@ -13,6 +13,27 @@ from streamlit_lottie import st_lottie
 import requests
 from matplotlib.backends.backend_agg import RendererAgg
 import altair as alt
+import base64
+
+@st.cache(allow_output_mutation=True)
+def get_base64(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+def set_bg(png_file):
+    bin_str = get_base64(png_file)
+    page_bg_img = """
+        <style>
+        .stApp {
+        background-image: url("data:image/png;base64,%s");
+        background-repeat: no-repeat;
+        background-size: 1500px 350px;
+        background-attachment : fixed;
+        }
+        </style>
+    """ % bin_str
+    st.markdown(page_bg_img, unsafe_allow_html=True)
 
 def load_lottie(url: str):
     r = requests.get(url)
@@ -39,16 +60,19 @@ def hour_to_month (hourly_array):
 class Veienvidere:
     def __init__(self):
         url1 = "https://www.varmepumpeinfo.no/forhandlersok"
-        st.header("Få et uforpliktende tilbud på bergvarme [her](%s)" % url1)
+        st.header("Få et tilbud på [bergvarme](%s)" % url1)
 
         url2 = "https://www.enova.no/privat/alle-energitiltak/varmepumper/vaske-til-vann-varmepumpe-/"
-        st.header("Søk ENOVA støtte [her](%s)" % url2)
+        st.header("[ENOVA støtte](%s)" % url2)
 
-        url3 = "https://www.varmepumpeinfo.no/energikilder-for-varmepumper/bergvarme"
-        st.header("Lær mer om bergvarme [her](%s)" % url3)
+        url3 = "https://www.sparebank1.no/nb/ostlandet/privat/lan/boliglan/gront-boliglan/gront-energilan.html"
+        st.header("[Grønt energilån](%s)" % url3)
 
-        url4 = "https://www.asplanviak.no/tjenester/grunnvarme/"
-        st.header("Rådgivningstjenester for større anlegg [her](%s)" % url4)
+        url4 = "https://www.varmepumpeinfo.no/energikilder-for-varmepumper/bergvarme"
+        st.header("[Lær mer](%s)" % url4)
+
+        url5 = "https://www.asplanviak.no/tjenester/grunnvarme/"
+        st.header("[Rådgivning for større anlegg](%s)" % url5)
 
         image = Image.open('Bilder/AsplanViak_illustrasjoner-02.png')
         st.image(image)
@@ -61,7 +85,7 @@ class Co2:
         pass
 
     def beregning(self, energibehov_hourly, kompressor_energi_y):
-        co2_per_kwh = 0.17 / 1000
+        co2_per_kwh = 0.08 / 1000
         co2_el_yearly = round(np.sum(energibehov_hourly) * co2_per_kwh)
         co2_gv_yearly = kompressor_energi_y * co2_per_kwh
 
@@ -98,14 +122,14 @@ class Co2:
             #plt.ylabel("CO2 utslipp [tonn]")
             #st.pyplot(plt)
             #plt.close()
-
+        st.caption('Forbrukt CO2 etter 25 år:')
         res_column_1, res_column_2, res_column_3 = st.columns(3)
         with res_column_1:
-            st.metric('CO2 Bergvarme', str(round (co2_gv_ligning[-1])) + ' tonn')
+            st.metric('Bergvarme', str(round (co2_gv_ligning[-1])) + ' tonn')
         with res_column_2:
-            st.metric('CO2 Elektrisk oppvarming', str(round (co2_el_ligning[-1])) + ' tonn')
+            st.metric('Elektrisk oppvarming', str(round (co2_el_ligning[-1])) + ' tonn')
         with res_column_3:
-            st.metric('CO2 Besparelse', str(round (co2_el_ligning[-1] - co2_gv_ligning[-1])) + ' tonn')
+            st.metric('Besparelse med bergvarme', str(round (co2_el_ligning[-1] - co2_gv_ligning[-1])) + ' tonn')
 
 
 
@@ -120,11 +144,13 @@ class Kostnader:
         self.el_pris = el_pris
 
     def oppdater_dybde_til_fjell(self):
-        self.dybde_til_fjell = st.number_input ('Oppgi dybde til fjell [m]', value = self.dybde_til_fjell, min_value = 0, max_value = 50)
-        st.caption (""" Dybde til fjell [m] er en viktig parameter for å beregne kostnaden for
+        tekst= (""" Dybde til fjell [m] er en viktig parameter for å beregne kostnaden for
          brønnboring. Foreslått dybde til fjell er basert på målt dybde til fjell i nærmeste energibrønn. 
          Dybde til fjell har stor lokal variasjon og bør sjekkes mot Nasjonal database for grunnundersøkelser (NADAG).
          Lenke: https://geo.ngu.no/kart/nadag-avansert/ """)
+        self.dybde_til_fjell = st.number_input ('Oppgi dybde til fjell [m]', value = self.dybde_til_fjell, 
+        min_value = 0, max_value = 50, help=tekst)
+
 
     def investeringskostnad (self):
         if self.varmepumpe_storrelse <= 6:  # 6 kW
@@ -200,8 +226,8 @@ class Kostnader:
         self.kostnad_el_yearly = kostnad_el_yearly
         self.kostnad_gv_yearly = kostnad_gv_yearly
 
-        st.write('Fra første dag bergvarmeanlegget settes i gang vil dine månedlige utgifter fordele seg '
-                 'som i søylediagrammet under.')
+        #st.write('Fra første dag bergvarmeanlegget settes i gang vil dine månedlige utgifter fordele seg '
+         #        'som i søylediagrammet under.')
                  
         months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des']
         #---
@@ -269,13 +295,14 @@ class Kostnader:
         #    st.pyplot(plt)
         #    plt.close()
 
+        st.caption('Summerte månedlige driftskostnader (per år):')
         cost_column_1, cost_column_2, cost_column_3 = st.columns(3)
         with cost_column_1:
             st.metric(label="Bergvarme", value=(str(round(kostnad_gv_yearly, -2)) + " kr"))
         with cost_column_2:
-            st.metric(label="Drift - Elektrisk oppvarming", value=(str(round(kostnad_el_yearly, -2)) + " kr"))
+            st.metric(label="Elektrisk oppvarming", value=(str(round(kostnad_el_yearly, -2)) + " kr"))
         with cost_column_3:
-            st.metric('Årlig besparelse', str(round (kostnad_el_yearly - kostnad_gv_yearly, -2)) + ' kr')
+            st.metric('Besparelse med bergvarme', str(round (kostnad_el_yearly - kostnad_gv_yearly, -2)) + ' kr')
 
     def gronne_laan (self):
         x_axis = np.array(range(1, 26))
@@ -330,8 +357,15 @@ class Strompriser ():
         pass
 
     def input (self):
-        self.year = st.selectbox('Hvilken årlig strømpris skal ligge til grunn?',('2021', '2020', '2019', '2018', 'Gjennomsnitt av de siste 4 år'))
-        self.region = st.selectbox('Hvilken strømregion skal strømprisen baseres på?',('Sørøst-Norge', 'Sørvest-Norge', 'Midt-Norge', 'Nord-Norge', 'Vest-Norge'))
+        self.year = st.selectbox('Hvilken årlig strømpris skal ligge til grunn?',('2021', '2020', '2019', '2018', 
+        'Gjennomsnitt av de siste 4 år'), help="""
+        Det er hentet inn strømpris per time for de siste 4 år. Dette inkluderer også nettleie. 
+        Velg den som skal ligge til grunn for beregningen. 
+        """)
+        self.region = st.selectbox('Hvilken strømregion skal strømprisen baseres på?',
+        ('Sørøst-Norge (N01)', 'Sørvest-Norge (N02)', 'Midt-Norge (N03)', 'Nord-Norge (N04)', 'Vest-Norge (N05)'), help="""
+        Norge er delt inn i 5 strømregioner. Velg den som passer best ut ifra din adresse. 
+        """)
 
     @st.cache
     def el_spot_pris (self):
@@ -352,15 +386,15 @@ class Strompriser ():
         pslag = 0
         moms = 1.25
 
-        if self.region == 'Sørøst-Norge':
+        if self.region == 'Sørøst-Norge (N01)':
             el_pris_hourly = (self.el_spot_pris().iloc[:, 3] / 1000 + nettleie + elavgift + fastledd + pslag) * moms
-        if self.region == 'Sørvest-Norge':
+        if self.region == 'Sørvest-Norge (N02)':
             el_pris_hourly = (self.el_spot_pris().iloc[:, 4] / 1000 + nettleie + elavgift + fastledd + pslag) * moms
-        if self.region == 'Midt-Norge':
+        if self.region == 'Midt-Norge (N03)':
             el_pris_hourly = (self.el_spot_pris().iloc[:, 5] / 1000 + nettleie + elavgift + fastledd + pslag) * moms
-        if self.region == 'Nord-Norge':
+        if self.region == 'Nord-Norge (N04)':
             el_pris_hourly = (self.el_spot_pris().iloc[:, 6] / 1000 + nettleie + elavgift + fastledd + pslag) * moms
-        if self.region == 'Vest-Norge':
+        if self.region == 'Vest-Norge (N05)':
             el_pris_hourly = (self.el_spot_pris().iloc[:, 7] / 1000 + nettleie + elavgift + fastledd + pslag) * moms
 
         el_pris_hourly = np.array(el_pris_hourly)
@@ -408,10 +442,16 @@ class Dimensjonering:
         return np.array (tmp_liste_h), round (np.sum (tmp_liste_h)), float("{:.1f}".format(varmepumpe_storrelse))
 
     def angi_dekningsgrad(self):
-        return st.number_input('Dekningsgrad til bergvarmeanlegget [%]', value=100, min_value=80, max_value=100, step = 1)
+        return st.number_input('Dekningsgrad til bergvarmeanlegget [%]', value=100, 
+        min_value=80, max_value=100, step = 1, help='Vanligvis settes dekningsgraden til 100% ' 
+        'som betyr at bergvarmeanlegget skal dekke hele energibehovet.' 
+        ' Dersom dekningsgraden er mindre enn dette skal energikilder som vedfyring eller strøm dekke behovet de kaldeste dagene.')
 
     def angi_cop(self):
-        return st.number_input('Årsvarmefaktor (SCOP) til varmepumpen', value=3.5, min_value=2.0, max_value=4.0, step = 0.1)
+        return st.number_input('Årsvarmefaktor (SCOP) til varmepumpen', value=3.5, min_value=2.0, 
+        max_value=4.0, step = 0.1, help='Årsvarmefaktoren avgjør hvor mye ' 
+        'energi du sparer med et varmepumpeanlegg; den uttrykker hvor ' 
+        'mye varmeenergi anlegget leverer i forhold til hvor mye elektrisk energi det bruker i løpet av et år.')
 
     def dekning(self, energibehov_arr_gv, energibehov_arr, cop):
         levert_fra_bronner_arr = energibehov_arr_gv - energibehov_arr_gv / cop
@@ -529,7 +569,7 @@ class Dimensjonering:
     def antall_bronner(self, antall_meter):
         bronnlengde = 0
         for i in range(1,10):
-            bronnlengde += 350
+            bronnlengde += 300
             if antall_meter <= bronnlengde:
                 return i
 
@@ -558,7 +598,13 @@ class Energibehov:
         return dhw_arr, romoppvarming_arr
 
     def resultater(self, dhw_sum, romoppvarming_sum, energibehov_sum):
-        st.metric(label="Årlig oppvarmingsbehov", value=(str(round ((dhw_sum + romoppvarming_sum), -1)) + " kWh"))
+        column_1, column_2, column_3 = st.columns(3)
+        with column_1:
+            st.metric(label="Årlig varmtvannsbehov", value=(str(int(round (dhw_sum,-1))) + " kWh"))
+        with column_2:
+            st.metric(label="Årlig romoppvarmingsebehov", value=(str(int(round(romoppvarming_sum, -1))) + " kWh"))
+        with column_3:
+            st.metric(label="Årlig oppvarmingsbehov", value=(str(int(round ((dhw_sum + romoppvarming_sum), -1))) + " kWh"))
 
     def plot(self, dhw_arr, romoppvarming_arr):
         dhw_arr = hour_to_month (dhw_arr)
@@ -598,8 +644,17 @@ class Energibehov:
         return int(dhw_sum), int(romoppvarming_sum), int(energibehov_sum)
         
     def juster_behov(self, dhw_sum, romoppvarming_sum, dhw_arr, romoppvarming_arr):
-        dhw_sum_ny = st.number_input('Varmtvannsbehov [kWh]', min_value = int(dhw_sum*0.1), max_value = int(dhw_sum*5), value = round(dhw_sum, -1), step = int(500))
-        romoppvarming_sum_ny = st.number_input('Romoppvarmingsbehov [kWh]', min_value = int(romoppvarming_sum*0.1), max_value = int(romoppvarming_sum*5), value = round (romoppvarming_sum, -1), step = int(500))
+        dhw_sum_ny = st.number_input('Varmtvann [kWh]', min_value = int(dhw_sum*0.1), 
+        max_value = int(dhw_sum*5), value = round(dhw_sum, -1), step = int(500), help="""
+        Erfaring viser at varmtvannsbehovet er avhengig av antall forbrukere og bør justeres etter dette. 
+        Bor det mange i boligen bør det altså justeres opp.  
+        """)
+
+        romoppvarming_sum_ny = st.number_input('Romoppvarming [kWh]', min_value = int(romoppvarming_sum*0.1), 
+        max_value = int(romoppvarming_sum*5), value = round (romoppvarming_sum, -1), step = int(500), help= """
+        Romoppvarmingsbehovet er beregnet basert på oppgitt oppvarmet areal og temperaturdata fra nærmeste værstasjon
+        for de 4 siste år . 
+        """)
         dhw_prosent = dhw_sum_ny / dhw_sum
         romoppvarming_prosent = romoppvarming_sum_ny / romoppvarming_sum
 
@@ -757,7 +812,7 @@ class Forside:
         pass
 
     def overskrift(self):
-        return 'Inndata'
+        return 'Fyll inn her'
 
     def tittel(self):
         return 'Bergvarmekalkulatoren'
@@ -767,6 +822,10 @@ class Forside:
 
     def forsidebilde(self):
         image = Image.open('Bilder/hovedlogo.png')
+        st.image(image)
+
+    def av_logo(self):
+        image = Image.open('Bilder/logo.png')
         st.image(image)
 
     def innstillinger(self):
@@ -785,9 +844,16 @@ class Forside:
         st.markdown(hide_menu_style,unsafe_allow_html=True)
 
     def input(self):
-         bolig_areal = st.number_input('Oppgi oppvarmet bruksareal [m2]', min_value=1, value=150, max_value=1000, step=10)
-         adresse = st.text_input('Hva er din adresse?', placeholder = 'Karl Johans Gate 22, Oslo')
-         return adresse, bolig_areal
+        c1, c2 = st.columns(2)
+        with c1:
+            bolig_areal = st.number_input('Oppgi oppvarmet areal [m2]?', min_value=100, value=150, max_value=1000, step=10, 
+            help='Oppvarmet bruksareal er den delen av bruksarealet (BRA) som tilføres varme fra bygnings varmesystem')
+        with c2:
+            adresse = st.text_input('Hva er din adresse?', placeholder = 'Karl Johans Gate 22, Oslo', help="""
+            Adressen brukes til å hente inn nøyaktige temperaturdata og nærliggende energibrønner. 
+            Husk å inkludere kommune når du skriver inn adressen.
+            """)
+            return adresse, bolig_areal
 
     def start_button(self):
         press_start = st.button('Start beregning','press_start')
