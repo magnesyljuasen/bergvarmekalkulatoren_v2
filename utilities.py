@@ -11,7 +11,6 @@ from streamlit_folium import folium_static
 from geopy.geocoders import Nominatim
 from streamlit_lottie import st_lottie
 import requests
-from matplotlib.backends.backend_agg import RendererAgg
 import altair as alt
 import base64
 
@@ -78,8 +77,6 @@ class Veienvidere:
         st.image(image)
 
 
-
-
 class Co2:
     def __init__(self):
         pass
@@ -104,24 +101,6 @@ class Co2:
             range=['#48a23f', '#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)))
         st.altair_chart(c, use_container_width=True)
 
-
-        #Lock
-        #lock = RendererAgg.lock
-        #with lock:
-            #plt.rcParams['axes.facecolor'] = '#FFFFFF'
-            #plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-
-            #elektrisk_oppvarming_label = 'Elektrisk oppvarming: ' + str(round (co2_el_ligning[-1])) + ' tonn'
-            #bergvarme_label = 'Bergvarme: ' + str(round (co2_gv_ligning[-1])) + ' tonn'
-            #plt.plot(x_axis, co2_el_ligning, label='Elektrisk oppvarming', color = '#880808')
-            #plt.plot(x_axis, co2_gv_ligning, label='Bergvarme', color = '#48a23f')
-
-            #plt.legend(loc='best')
-            #plt.grid()
-            #plt.xlabel('År')
-            #plt.ylabel("CO2 utslipp [tonn]")
-            #st.pyplot(plt)
-            #plt.close()
         st.caption('Forbrukt CO2 etter 25 år:')
         res_column_1, res_column_2, res_column_3 = st.columns(3)
         with res_column_1:
@@ -130,8 +109,6 @@ class Co2:
             st.metric('Elektrisk oppvarming', str(round (co2_el_ligning[-1])) + ' tonn')
         with res_column_3:
             st.metric('Besparelse med bergvarme', str(round (co2_el_ligning[-1] - co2_gv_ligning[-1])) + ' tonn')
-
-
 
 
 class Kostnader:
@@ -148,10 +125,9 @@ class Kostnader:
          brønnboring. Foreslått dybde til fjell er basert på målt dybde til fjell i nærmeste energibrønn. 
          Dybde til fjell har stor lokal variasjon og bør sjekkes mot Nasjonal database for grunnundersøkelser (NADAG).
          Lenke: https://geo.ngu.no/kart/nadag-avansert/ """)
-        self.dybde_til_fjell = st.number_input ('Oppgi dybde til fjell [m]', value = self.dybde_til_fjell, 
-        min_value = 0, max_value = 50, help=tekst)
-
-
+        self.dybde_til_fjell = st.number_input ('Oppgi dybde til fjell [m]', 
+        value = self.dybde_til_fjell, min_value = 0, max_value = 50, help=tekst)
+        
     def investeringskostnad (self):
         if self.varmepumpe_storrelse <= 6:  # 6 kW
             varmepumpe_pris = 91066 + 50000
@@ -164,7 +140,6 @@ class Kostnader:
         odex_sko_pris = 575
         bunnlodd_pris = 1000
         lokk_pris = 700
-
         odex_i_losmasser_pris = 500  # per meter
         fjellboring_pris = 150  # per meter
         kollektor_pris = 55  # per meter
@@ -190,22 +165,7 @@ class Kostnader:
             color=alt.Color('Forklaring:N', scale=alt.Scale(domain=['Bergvarme', 'Elektrisk oppvarming'], 
             range=['#48a23f', '#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)))
         st.altair_chart(c, use_container_width=True)
-
-        #Lock
-        #lock = RendererAgg.lock
-        #with lock:
-            #plt.plot(x_axis, el_ligning, label='Elektrisk oppvarming', color = '#880808')
-            #plt.plot(x_axis, gv_ligning, label='Bergvarme', color = '#48a23f')
-            #plt.rcParams['axes.facecolor'] = '#FFFFFF'
-            #plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-            #plt.legend(loc='best')
-            #plt.grid()
-            #plt.xlim(0,25)
-            #plt.xlabel('År')
-            #plt.ylabel("Kostnader [kroner]")
-            #st.pyplot(plt)
-            #plt.close()
-
+        
         res_column_1, res_column_2, res_column_3 = st.columns(3)
         with res_column_1:
             st.metric('Estimert investeringskostnad', str(self.investeringskostnad()) + ' kr')
@@ -225,17 +185,12 @@ class Kostnader:
         kostnad_gv_yearly = int(np.nansum(kostnad_gv_monthly))
         self.kostnad_el_yearly = kostnad_el_yearly
         self.kostnad_gv_yearly = kostnad_gv_yearly
-
-        #st.write('Fra første dag bergvarmeanlegget settes i gang vil dine månedlige utgifter fordele seg '
-         #        'som i søylediagrammet under.')
                  
         months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des']
-        #---
         wide_form = pd.DataFrame({
             'Måneder' : months,
             'Bergvarme' : kostnad_gv_monthly, 
-            'Elektrisk oppvarming' : kostnad_el_monthly
-            })
+            'Elektrisk oppvarming' : kostnad_el_monthly})
 
         c1 = alt.Chart(wide_form).transform_fold(
             ['Bergvarme', 'Elektrisk oppvarming'],
@@ -243,8 +198,7 @@ class Kostnader:
                 x=alt.X('Måneder:N', sort=months, title=None),
                 y=alt.Y('Kostnader (kr):Q',stack=None),
                 color=alt.Color('key:N', scale=alt.Scale(domain=['Bergvarme'], 
-                range=['#48a23f']), legend=alt.Legend(orient='top', direction='vertical', title=None)
-                ))
+                range=['#48a23f']), legend=alt.Legend(orient='top', direction='vertical', title=None)))
 
         c2 = alt.Chart(wide_form).transform_fold(
             ['Bergvarme', 'Elektrisk oppvarming'],
@@ -252,48 +206,12 @@ class Kostnader:
                 x=alt.X('Måneder:N', sort=months, title=None),
                 y=alt.Y('Kostnader (kr):Q',stack=None, title=None),
                 color=alt.Color('key:N', scale=alt.Scale(domain=['Elektrisk oppvarming'], 
-                range=['#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)
-                ))
+                range=['#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)))
         col1, col2 = st.columns(2)
         with col1:
             st.altair_chart(c1, use_container_width=True)  
         with col2:
             st.altair_chart(c2, use_container_width=True)  
-        
-
-
-
-
-                #alt.Color('key:N', scale=alt.Scale(domain=['Bergvarme', 'Elektrisk oppvarming'], 
-                #range=['#48a23f', '#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)),
-                #column=alt.Column('Måneder:N', sort=months, header=alt.Header(title=None))            
-                #).resolve_scale(x='shared').configure_view(stroke='transparent')
-
-        #c = alt.Chart(wide_form).transform_fold(
-        #    ['Bergvarme', 'Elektrisk oppvarming'],
-        #    as_=['key', 'Kostnader (kr)']).mark_bar().encode(
-        #        x=alt.X('Måneder:N', sort=months),
-        #        #x=alt.X('key:N', axis=None),
-        #        y='Kostnader (kr):Q',
-        #        color=alt.Color('key:N', scale=alt.Scale(domain=['Bergvarme', 'Elektrisk oppvarming'], 
-        #        range=['#48a23f', '#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)),
-        #        #column=alt.Column('Måneder:N', sort=months, header=alt.Header(title=None))            
-        #        ).resolve_scale(x='shared').configure_view(stroke='transparent')
-            
-
-        #Lock
-        #lock = RendererAgg.lock
-        #with lock:
-        #    plt.bar(x_axis - 0.2, kostnad_el_monthly, 0.4, label='Elektrisk oppvarming', color = '#880808')
-        #    plt.bar(x_axis + 0.2, kostnad_gv_monthly, 0.4, label='Bergvarme', color = '#48a23f')
-        #    plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        #    plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-        #    plt.xticks(x_axis, months)
-        #    plt.legend(loc='best')
-        #    plt.grid()
-        #    plt.ylabel("Kostnader [kr]")
-        #    st.pyplot(plt)
-        #    plt.close()
 
         st.caption('Summerte månedlige driftskostnader (per år):')
         cost_column_1, cost_column_2, cost_column_3 = st.columns(3)
@@ -333,24 +251,6 @@ class Kostnader:
                 gv_ligning_2.append(self.kostnad_gv_yearly * j + verdi)
 
         gv_ligning = gv_ligning_1 + gv_ligning_2
-
-        #Lock
-        lock = RendererAgg.lock
-        with lock:
-            plt.plot(x_axis, el_ligning, label='Elektrisk oppvarming', color = '#880808')
-            plt.plot(x_axis_laan, gv_ligning, label='Bergvarme m/ grønt lån', color = '#48a23f')
-            plt.rcParams['axes.facecolor'] = '#FFFFFF'
-            plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-            plt.legend(loc='best')
-            plt.grid()
-            plt.xlim(0,25)
-            plt.xlabel('År')
-            plt.ylabel("Kostnader [kroner]")
-            st.pyplot(plt)
-            plt.close()
-
-
-
 
 class Strompriser ():
     def __init__(self):
@@ -412,8 +312,6 @@ class Strompriser ():
             return gjennomsnitt_el_pris / 4
         else:
             return self.el_pris ()
-
-
 
 
 class Dimensjonering:
@@ -493,27 +391,6 @@ class Dimensjonering:
 
         st.altair_chart(c, use_container_width=True)
 
-
-        #Lock
-        #lock = RendererAgg.lock
-        #with lock:
-        #    plt.fill_between(x_arr, np.sort(energibehov_arr)[::-1], label='Spisslast', color = '#F0F4E3')
-        #    plt.fill_between(x_arr, np.sort(energibehov_arr_gv)[::-1], label='Levert energi fra brønn(er)', color ='#b7dc8f')
-        #    plt.fill_between(x_arr, np.sort(kompressor_arr)[::-1], label='Strømforbruk varmepumpe', color = '#1d3c34')
-            
-        #    plt.xlabel('Varighet [timer]')
-        #    plt.ylabel('Effekt [kW]')
-
-        #    plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        #    plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-
-        #    plt.xlim(0,8760)
-        #    plt.ylim(0, max(energibehov_arr))
-        #    plt.grid()
-        #    plt.legend()
-        #    st.pyplot (plt)
-        #    plt.close()
-
     def varighetsdiagram_bar(self, spisslast_arr, energibehov_arr_gv, kompressor_arr, levert_fra_bronner_arr):
         spisslast_arr = hour_to_month (spisslast_arr)
         energibehov_arr_gv = hour_to_month (energibehov_arr_gv)
@@ -532,25 +409,6 @@ class Dimensjonering:
             color=alt.Color('Forklaring:N', scale=alt.Scale(domain=['Levert energi fra brønn(er)', 'Strømforbruk varmepumpe'], 
             range=['#48a23f', '#1d3c34']), legend=alt.Legend(orient='top', direction='vertical', title=None)))
         st.altair_chart(c, use_container_width=True)
-
-        #spisslast_label='Dekkes ikke\nav bergvarme:\n' + str(sum(spisslast_arr)) + ' kWh'
-        #levert_energi_label='Levert energi \nfra brønn(er):\n' + str(sum(levert_fra_bronner_arr)) + ' kWh'
-        #kompressor_label='Strømforbruk \nvarmepumpe:\n' + str(sum(kompressor_arr)) + ' kWh'
-        
-        #Lock
-        #lock = RendererAgg.lock
-        #with lock:
-        #    plt.bar(x_axis, levert_fra_bronner_arr, 0.4, label=levert_energi_label, color ='#b7dc8f', bottom = kompressor_arr)
-        #    plt.bar(x_axis, kompressor_arr, 0.4, label=kompressor_label, color = '#1d3c34')
-        #    plt.bar(x_axis, spisslast_arr, 0.4, label=spisslast_label, color = '#F0F4E3', bottom = energibehov_arr_gv)
-        #    plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        #    plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-        #    plt.xticks(x_axis, months)
-        #    plt.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=3)
-        #    plt.grid()
-        #    plt.ylabel("Oppvarmingsbehov [kWh]")
-        #    st.pyplot(plt)
-        #    plt.close()
 
     def antall_meter(self, varmepumpe_storrelse, levert_fra_bronner, cop):
         energi_per_meter = 80  # kriterie 1
@@ -581,8 +439,6 @@ class Dimensjonering:
             st.metric(label="Varmepumpestørrelse", value=str(math.ceil(varmepumpe_storrelse)) + " kW")
         with column_3:
             st.metric(label='Antall brønner', value = str(antall_bronner))
-
-
 
 
 class Energibehov:
@@ -622,21 +478,6 @@ class Energibehov:
             range=['#4a625c', '#8e9d99']), legend=alt.Legend(orient='top', direction='vertical', title=None)))
         st.altair_chart(c, use_container_width=True)
 
-        
-
-
-
-        #plt.bar(x_axis, dhw_arr, 0.4, label = 'Varmtvannsbehov', color = '#1d3c34')
-        #plt.bar(x_axis, romoppvarming_arr, 0.4, label = 'Romoppvarmingsbehov', color = '#48a23f', bottom = dhw_arr)
-        #plt.rcParams['axes.facecolor'] = '#FFFFFF'
-        #plt.rcParams['savefig.facecolor'] = '#F6F8F1'
-        #plt.xticks(x_axis, months)
-        #plt.legend(bbox_to_anchor=(0,1.02,1,0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=3)
-        #plt.grid()
-        #plt.ylabel("Oppvarmingsbehov [kWh]")
-        #st.pyplot(plt)
-        #plt.close()
-
     def aarlig_behov(self, dhw_arr, romoppvarming_arr):
         dhw_sum = int(sum(dhw_arr))
         romoppvarming_sum = int(sum(romoppvarming_arr))
@@ -647,14 +488,12 @@ class Energibehov:
         dhw_sum_ny = st.number_input('Varmtvann [kWh]', min_value = int(dhw_sum*0.1), 
         max_value = int(dhw_sum*5), value = round(dhw_sum, -1), step = int(500), help="""
         Erfaring viser at varmtvannsbehovet er avhengig av antall forbrukere og bør justeres etter dette. 
-        Bor det mange i boligen bør det altså justeres opp.  
-        """)
+        Bor det mange i boligen bør det altså justeres opp. """)
 
         romoppvarming_sum_ny = st.number_input('Romoppvarming [kWh]', min_value = int(romoppvarming_sum*0.1), 
         max_value = int(romoppvarming_sum*5), value = round (romoppvarming_sum, -1), step = int(500), help= """
         Romoppvarmingsbehovet er beregnet basert på oppgitt oppvarmet areal og temperaturdata fra nærmeste værstasjon
-        for de 4 siste år . 
-        """)
+        for de 4 siste år. """)
         dhw_prosent = dhw_sum_ny / dhw_sum
         romoppvarming_prosent = romoppvarming_sum_ny / romoppvarming_sum
 
@@ -662,8 +501,6 @@ class Energibehov:
         romoppvarming_arr = romoppvarming_arr * romoppvarming_prosent
 
         return dhw_sum_ny, romoppvarming_sum_ny, dhw_arr, romoppvarming_arr
-
-
 
 
 class Temperaturdata ():
@@ -702,8 +539,6 @@ class Temperaturdata ():
         return stasjon_id, stasjon_lat, stasjon_long, distanse_min
 
 
-
-
 class Energibronn:
     def __init__(self, lat, long):
         df = self.importer_csv ()
@@ -734,8 +569,9 @@ class Energibronn:
         dybde_til_fjell = round(self.energibronner_boret_lengde_til_berg.iloc[minste_i])
         energibronn_long = self.energibronner_long.iloc[minste_i]
         energibronn_lat = self.energibronner_lat.iloc[minste_i]
+        if dybde_til_fjell > 50:
+            dybde_til_fjell=50
         return dybde_til_fjell, energibronn_lat, energibronn_long
-
 
 
 class Gis:
