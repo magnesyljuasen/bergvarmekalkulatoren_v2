@@ -519,7 +519,7 @@ class Temperaturdata ():
 
     def gjennomsnittstemperatur(self):
         arr = self.temperaturserie_fra_fil()
-        return float(np.average(arr))
+        return float("{:.2f}".format(np.average(arr)))
 
     @st.cache
     def importer_csv (self):
@@ -685,7 +685,7 @@ class Forside:
     def input(self):
         c1, c2 = st.columns(2)
         with c1:
-            bolig_areal = st.number_input('Oppgi oppvarmet areal [m\u2082]?', min_value=100, value=150, max_value=1000, step=10, 
+            bolig_areal = st.number_input('Oppgi oppvarmet areal [m\u00b2]?', min_value=100, value=150, max_value=1000, step=10, 
             help='Oppvarmet bruksareal er den delen av bruksarealet (BRA) som tilføres varme fra bygnings varmesystem')
         with c2:
             adresse = st.text_input('Hva er din adresse?', placeholder = 'Karl Johans Gate 22, Oslo', help="""

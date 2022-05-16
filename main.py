@@ -68,16 +68,16 @@ def main ():
         dybde_til_fjell, energibronn_lat, energibronn_long = Energibronn(adresse_lat, adresse_long).dybde_til_fjell()
         temperaturdata_obj = Temperaturdata(adresse_lat,adresse_long)
         stasjon_id, stasjon_lat, stasjon_long, distanse_min = temperaturdata_obj.nearmeste_stasjon()
-        #st.write (temperaturdata_obj.gjennomsnittstemperatur())
 
         st.title('Resultater')
         st.header('Oversiktskart')
         Gis().kart(stasjon_lat, adresse_lat, energibronn_lat, stasjon_long, adresse_long, energibronn_long)
         with st.expander ('Hva viser kartet?'):
-            st.write (""" Kartet viser adresse (rød sirkel), nærmeste eksisterende energibrønn (grønn sirkel) 
-            og nærmeste værstasjon med fullstendige temperaturdata (blå sirkel). Nærmeste eksisterende 
-            energibrønn brukes til å estimere dybde til fjell i området. Fra værstasjonen hentes det 
-            inn målt temperatur per time for de siste 4 år. """)
+            st.write (f""" Kartet viser adresse (rød sirkel), nærmeste eksisterende energibrønn (grønn sirkel) 
+            og nærmeste værstasjon, {stasjon_id}, med fullstendige temperaturdata (blå sirkel). 
+            Nærmeste eksisterende energibrønn brukes til å estimere dybde til fjell i området. Fra værstasjonen hentes det 
+            inn målt temperatur per time for de siste 4 år. Gjennomsnittstemperaturen
+            er målt til å være {temperaturdata_obj.gjennomsnittstemperatur()} \u2103. """)
 
         #--Sidebar--
         with st.sidebar:
