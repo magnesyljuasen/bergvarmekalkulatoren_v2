@@ -583,7 +583,8 @@ class Gis:
 
     def adresse_til_koordinat (self, adresse):
         geolocator = Nominatim(user_agent="my_request")
-        location = geolocator.geocode(adresse, timeout=None)
+        location = geolocator.geocode(adresse, timeout=None, country_codes='NO', exactly_one=True)
+        st.write(location)
         if location is None:
             st.error ('Ugyldig adresse. Prøv igjen!')
             #lott = load_lottie('https://assets2.lottiefiles.com/packages/lf20_i0hpsr18.json')
