@@ -58,20 +58,23 @@ def hour_to_month (hourly_array):
 
 class Veienvidere:
     def __init__(self):
-        url1 = "https://www.varmepumpeinfo.no/forhandlersok"
-        st.header("Få et tilbud på [bergvarme](%s)" % url1)
+        c1, c2 = st.columns(2)
+        with c1:
+            url = "https://www.varmepumpeinfo.no/forhandlersok"
+            st.subheader("◈ [Finn leverandør](%s)" % url)
 
-        url2 = "https://www.enova.no/privat/alle-energitiltak/varmepumper/vaske-til-vann-varmepumpe-/"
-        st.header("[ENOVA støtte](%s)" % url2)
+            url = "https://www.enova.no/privat/alle-energitiltak/varmepumper/vaske-til-vann-varmepumpe-/"
+            st.subheader("◈ [ENOVA støtte](%s)" % url)
 
-        url3 = "https://www.sparebank1.no/nb/ostlandet/privat/lan/boliglan/gront-boliglan/gront-energilan.html"
-        st.header("[Grønt energilån](%s)" % url3)
+            url = "https://www.sparebank1.no/nb/ostlandet/privat/lan/boliglan/gront-boliglan/gront-energilan.html"
+            st.subheader("◈ [Grønt energilån](%s)" % url)
 
-        url4 = "https://www.varmepumpeinfo.no/energikilder-for-varmepumper/bergvarme"
-        st.header("[Lær mer](%s)" % url4)
+        with c2:
+            url4 = "https://www.varmepumpeinfo.no/energikilder-for-varmepumper/bergvarme"
+            st.subheader("◇ [Lær mer](%s)" % url4)
 
-        url5 = "https://www.asplanviak.no/tjenester/grunnvarme/"
-        st.header("[Rådgivning for større anlegg](%s)" % url5)
+            url5 = "https://www.asplanviak.no/tjenester/grunnvarme/"
+            st.subheader("◇ [Rådgivning](%s)" % url5)
 
         image = Image.open('Bilder/AsplanViak_illustrasjoner-02.png')
         st.image(image)
@@ -101,7 +104,7 @@ class Co2:
             range=['#48a23f', '#880808']), legend=alt.Legend(orient='top', direction='vertical', title=None)))
         st.altair_chart(c, use_container_width=True)
 
-        st.caption('Forbrukt CO2 etter 25 år:')
+        st.caption('Forbrukt CO\u2082 etter 25 år:')
         res_column_1, res_column_2, res_column_3 = st.columns(3)
         with res_column_1:
             st.metric('Bergvarme', str(round (co2_gv_ligning[-1])) + ' tonn')
@@ -682,7 +685,7 @@ class Forside:
     def input(self):
         c1, c2 = st.columns(2)
         with c1:
-            bolig_areal = st.number_input('Oppgi oppvarmet areal [m2]?', min_value=100, value=150, max_value=1000, step=10, 
+            bolig_areal = st.number_input('Oppgi oppvarmet areal [m\u2082]?', min_value=100, value=150, max_value=1000, step=10, 
             help='Oppvarmet bruksareal er den delen av bruksarealet (BRA) som tilføres varme fra bygnings varmesystem')
         with c2:
             adresse = st.text_input('Hva er din adresse?', placeholder = 'Karl Johans Gate 22, Oslo', help="""

@@ -5,7 +5,6 @@ from streamlit_lottie import st_lottie
 #--Innstillinger--
 forside_obj = Forside()
 forside_obj.innstillinger()
-#set_bg('Bilder/background.png')
 #--Innstillinger--
 
  
@@ -132,13 +131,6 @@ def main ():
             Energien som leveres energibrønnen er vist med grønn farge i diagrammet, og strømforbuket i mørkegrønn farge.
             Erfaring tilsier at en energibrønn kan levere ca. 80 kWh/m. Totalt antall brønnmetere er beregnet ut ifra dette. """)
 
-        st.header ('Et miljøvennlig alternativ')
-        Co2().beregning(energibehov_arr, kompressor_sum)
-        with st.expander ('Hvordan beregnes dette?'):
-            st.write(""" NVE publiserer hvert år klimadeklarasjon for fysisk levert strøm i Norge. Det 
-            gjennomsnittlige direkte klimagassutslippet knyttet til bruk av strøm i Norge
-            var 8 gram CO2-ekvivalenter per kilowattime i 2020. Denne verdien ligger til grunn for beregningen. """)
-
         strompriser_obj = Strompriser()
 
         #--Sidebar--
@@ -176,7 +168,15 @@ def main ():
             kan dermed investeringskostnaden fordeles utover flere år. I mange tilfeller vil den månedlige 
             besparelsen med drift av et bergvarmeanlegg kunne forrente et slikt lån. """)
 
+        st.header ('Et miljøvennlig alternativ')
+        Co2().beregning(energibehov_arr, kompressor_sum)
+        with st.expander ('Hvordan beregnes dette?'):
+            st.write(""" NVE publiserer hvert år klimadeklarasjon for fysisk levert strøm i Norge. Det 
+            gjennomsnittlige direkte klimagassutslippet knyttet til bruk av strøm i Norge
+            var 8 gram CO2-ekvivalenter per kilowattime i 2020. Denne verdien ligger til grunn for beregningen. """)
+
         st.markdown("""---""")
+        st.title('Veien videre')
         Veienvidere()
         st.caption('Et verktøy fra Asplan Viak AS | 📧 magne.syljuasen@asplanviak.no')
         #--Appen--
