@@ -73,8 +73,8 @@ def main ():
         st.header('Oversiktskart')
         Gis().kart(stasjon_lat, adresse_lat, energibronn_lat, stasjon_long, adresse_long, energibronn_long)
         with st.expander ('Hva viser kartet?'):
-            st.write (f""" Kartet viser adresse (rød sirkel), nærmeste eksisterende energibrønn (grønn sirkel) 
-            og nærmeste værstasjon, {stasjon_id}, med fullstendige temperaturdata (blå sirkel). 
+            st.write (f""" Kartet viser adresse (mørkegrønn farge), nærmeste eksisterende energibrønn (grønn farge) 
+            og nærmeste værstasjon, {stasjon_id}, med fullstendige temperaturdata (solgul farge). 
             Nærmeste eksisterende energibrønn brukes til å estimere dybde til fjell i området. Fra værstasjonen hentes det 
             inn målt temperatur per time for de siste 4 år. Gjennomsnittstemperaturen
             er målt til å være {temperaturdata_obj.gjennomsnittstemperatur()} \u2103. """)

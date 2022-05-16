@@ -584,7 +584,6 @@ class Gis:
     def adresse_til_koordinat (self, adresse):
         geolocator = Nominatim(user_agent="my_request")
         location = geolocator.geocode(adresse, timeout=None, country_codes='NO', exactly_one=True)
-        st.write(location)
         if location is None:
             st.error ('Ugyldig adresse. Prøv igjen!')
             #lott = load_lottie('https://assets2.lottiefiles.com/packages/lf20_i0hpsr18.json')
@@ -598,53 +597,59 @@ class Gis:
         df1 = pd.DataFrame({'latitude': [stasjon_lat],'longitude': [stasjon_long]})
         df2 = pd.DataFrame({'latitude': [adresse_lat],'longitude': [adresse_long]})
         df3 = pd.DataFrame({'latitude': [energibronn_lat],'longitude': [energibronn_long]})
-        
+    
         st.pydeck_chart(pdk.Deck(
             map_style='mapbox://styles/mapbox/streets-v11',
             initial_view_state=pdk.ViewState(
                 latitude=adresse_lat,
                 longitude=adresse_long,
-                zoom=15,
-                pitch=50,
+                pitch=0,
             ),
             layers=[
                 pdk.Layer(
-                    'ScatterplotLayer',
+                    type='ScatterplotLayer',
                     data=df1,
                     get_position='[longitude, latitude]',
-                    get_radius=50,
                     pickable=True,
                     stroked=True,
+                    radius_max_pixels=10,
+                    radius_min_pixels=500,
                     filled=True,
-                    get_fill_color=[0, 0, 255],
-                    get_line_color=[0, 0, 0],
+                    line_width_scale=25,
+                    line_width_max_pixels=5,
+                    get_fill_color=[255, 195, 88],
+                    get_line_color=[0, 0, 0]
                 ),
                 pdk.Layer(
-                    'ScatterplotLayer',
+                    type='ScatterplotLayer',
                     data=df2,
                     get_position='[longitude, latitude]',
-                    get_radius=15,
                     pickable=True,
                     stroked=True,
+                    radius_max_pixels=20,
+                    radius_min_pixels=500,
                     filled=True,
-                    get_fill_color=[255, 0, 0],
-                    get_line_color=[0, 0, 0],
+                    line_width_scale=25,
+                    line_width_max_pixels=5,
+                    get_fill_color=[29, 60, 52],
+                    get_line_color=[29, 60, 52],
                 ),
                 pdk.Layer(
-                    'ScatterplotLayer',
+                    type='ScatterplotLayer',
                     data=df3,
                     get_position='[longitude, latitude]',
-                    get_radius=5,
                     pickable=True,
                     stroked=True,
+                    radius_max_pixels=10,
+                    radius_min_pixels=500,
                     filled=True,
-                    get_fill_color=[0, 255, 0],
-                    get_line_color=[0, 0, 0],
+                    line_width_scale=25,
+                    line_width_max_pixels=5,
+                    get_fill_color=[183, 220, 143],
+                    get_line_color=[0, 0, 0]
                 ),
             ],
         ))
-
-
 
 
 class Forside:
